@@ -3,6 +3,7 @@ package com.fadedtumi.sillytavernaccount.service;
 import com.fadedtumi.sillytavernaccount.dto.AuthResponse;
 import com.fadedtumi.sillytavernaccount.dto.LoginRequest;
 import com.fadedtumi.sillytavernaccount.dto.RegisterRequest;
+import com.fadedtumi.sillytavernaccount.entity.RefreshToken;
 import com.fadedtumi.sillytavernaccount.entity.User;
 import com.fadedtumi.sillytavernaccount.repository.UserRepository;
 import com.fadedtumi.sillytavernaccount.security.JwtTokenProvider;
@@ -33,6 +34,9 @@ public class AuthService {
     @Autowired
     private JwtTokenProvider tokenProvider;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     @Transactional
     public AuthResponse authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
@@ -51,7 +55,11 @@ public class AuthService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
 
-        return new AuthResponse(jwt, "Bearer", user.getId(), user.getUsername(), user.getEmail());
+        // 创建刷新令牌
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return new AuthResponse(jwt, refreshToken.getToken(), "Bearer", user.getId(),
+                user.getUsername(), user.getEmail());
     }
 
     @Transactional
@@ -88,6 +96,17 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
 
-        return new AuthResponse(jwt, "Bearer", user.getId(), user.getUsername(), user.getEmail());
+        // 创建刷新令牌
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return new AuthResponse(jwt, refreshToken.getToken(), "Bearer", user.getId(),
+                user.getUsername(), user.getEmail());
+    }
+
+    @Transactional
+    public void logoutUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("未找到用户"));
+        refreshTokenService.deleteByUserId(user.getId());
     }
 }

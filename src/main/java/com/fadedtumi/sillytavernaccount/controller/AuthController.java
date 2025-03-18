@@ -51,14 +51,8 @@ public class AuthController {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    Authentication authentication = authenticationManager.authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    user.getUsername(),
-                                    user.getPassword()
-                            )
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    String jwt = tokenProvider.generateToken(authentication);
+                    // 直接根据用户ID生成新的JWT，不需要重新认证
+                    String jwt = tokenProvider.generateTokenFromUsername(user.getUsername());
 
                     return ResponseEntity.ok(new AuthResponse(
                             jwt,

@@ -16,13 +16,13 @@ public class TestController {
 
     @GetMapping("/public")
     public ResponseEntity<String> publicEndpoint() {
-        return ResponseEntity.ok("这是公开的端点，任何人都可以访问");
+        return ResponseEntity.ok("此为公共端点");
     }
 
     @GetMapping("/protected")
     public ResponseEntity<Map<String, Object>> protectedEndpoint(Principal principal) {
         Map<String, Object> response = new HashMap<>();
-        response.put("message", "这是受保护的端点，需要身份验证");
+        response.put("message", "此为受保护的端点");
         response.put("username", principal.getName());
         response.put("timestamp", System.currentTimeMillis());
 
@@ -32,6 +32,6 @@ public class TestController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
     public ResponseEntity<String> adminEndpoint() {
-        return ResponseEntity.ok("这是管理员端点，只有管理员可以访问");
+        return ResponseEntity.ok("此为管理员端点");
     }
 }

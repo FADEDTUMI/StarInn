@@ -2,10 +2,12 @@ package com.fadedtumi.sillytavernaccount.controller;
 
 import com.fadedtumi.sillytavernaccount.dto.RegisterRequest;
 import com.fadedtumi.sillytavernaccount.dto.AuthResponse;
+import com.fadedtumi.sillytavernaccount.entity.RefreshToken;
 import com.fadedtumi.sillytavernaccount.entity.User;
 import com.fadedtumi.sillytavernaccount.repository.UserRepository;
 import com.fadedtumi.sillytavernaccount.service.AuthService;
 import com.fadedtumi.sillytavernaccount.security.JwtTokenProvider;
+import com.fadedtumi.sillytavernaccount.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,9 @@ public class AdminController {
 
     @Autowired
     private JwtTokenProvider tokenProvider;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     @Value("${admin.registration.key:defaultAdminKey}")
     private String adminRegistrationKey;
@@ -91,6 +96,10 @@ public class AdminController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
 
-        return ResponseEntity.ok(new AuthResponse(jwt, "Bearer", user.getId(), user.getUsername(), user.getEmail()));
+        // 创建刷新令牌
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), "Bearer", user.getId(),
+                user.getUsername(), user.getEmail()));
     }
 }

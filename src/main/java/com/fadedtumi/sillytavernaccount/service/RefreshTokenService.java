@@ -29,24 +29,34 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
+    @Transactional
     public RefreshToken createRefreshToken(Long userId) {
-        RefreshToken refreshToken = new RefreshToken();
-
+        // 获取用户信息
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("未找到用户ID: " + userId));
+
+        // 添加日志
+        System.out.println("正在为用户ID:" + userId + "创建刷新令牌");
 
         // 检查用户是否已有刷新令牌
         Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
         if (existingToken.isPresent()) {
+            System.out.println("发现用户ID:" + userId + "的现有令牌，正在删除...");
             refreshTokenRepository.delete(existingToken.get());
+            refreshTokenRepository.flush();
+            System.out.println("删除完成");
         }
 
+        // 创建新的刷新令牌
+        RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
 
-        refreshToken = refreshTokenRepository.save(refreshToken);
-        return refreshToken;
+        // 保存并返回新令牌
+        RefreshToken saved = refreshTokenRepository.save(refreshToken);
+        System.out.println("为用户ID:" + userId + "成功创建新令牌");
+        return saved;
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {

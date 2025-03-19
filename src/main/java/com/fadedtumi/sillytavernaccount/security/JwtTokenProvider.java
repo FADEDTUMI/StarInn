@@ -50,35 +50,54 @@ public class JwtTokenProvider {
     }
 
     public String getUsernameFromToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-        return claims.getSubject();
+            return claims.getSubject();
+        } catch (Exception e) {
+            logger.error("无法从令牌中获取用户名: {}", e.getMessage());
+            return null;
+        }
     }
 
     public Authentication getAuthentication(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        try {
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("roles").toString().split(","))
+            String rolesString = claims.get("roles", String.class);
+            Collection<? extends GrantedAuthority> authorities;
+
+            if (rolesString != null && !rolesString.isEmpty()) {
+                authorities = Arrays.stream(rolesString.split(","))
                         .filter(role -> !role.isEmpty())
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
+            } else {
+                // 如果令牌中没有角色信息，至少给一个用户角色
+                authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
+                logger.warn("从令牌中找不到角色信息，使用默认的ROLE_USER");
+            }
 
-        User principal = new User(claims.getSubject(), "", authorities);
+            User principal = new User(claims.getSubject(), "", authorities);
+            logger.debug("已创建用户认证 - 用户名: {}, 角色: {}", claims.getSubject(), authorities);
 
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+            return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        } catch (Exception e) {
+            logger.error("无法创建认证对象: {}", e.getMessage());
+            return null;
+        }
     }
 
     public boolean validateToken(String token) {
@@ -87,19 +106,22 @@ public class JwtTokenProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {
-            logger.error("Invalid JWT signature: {}", e.getMessage());
+            logger.error("无效的JWT签名: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token: {}", e.getMessage());
+            logger.error("无效的JWT令牌: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("JWT token is expired: {}", e.getMessage());
+            logger.error("JWT令牌已过期: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("JWT token is unsupported: {}", e.getMessage());
+            logger.error("不支持的JWT令牌: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
+            logger.error("JWT声明字符串为空: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("JWT验证发生未知错误: {}", e.getMessage());
         }
 
         return false;
     }
+
     public String generateTokenFromUsername(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
@@ -110,6 +132,7 @@ public class JwtTokenProvider {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
+                .claim("roles", "ROLE_USER")  // 确保添加角色信息
                 .signWith(key)
                 .compact();
     }

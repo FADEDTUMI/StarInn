@@ -4,6 +4,7 @@ import com.fadedtumi.sillytavernaccount.entity.RefreshToken;
 import com.fadedtumi.sillytavernaccount.entity.User;
 import com.fadedtumi.sillytavernaccount.repository.RefreshTokenRepository;
 import com.fadedtumi.sillytavernaccount.repository.UserRepository;
+import com.fadedtumi.sillytavernaccount.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class RefreshTokenService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
@@ -38,7 +42,7 @@ public class RefreshTokenService {
         // 添加日志
         System.out.println("正在为用户ID:" + userId + "创建刷新令牌");
 
-        // 检查用户是否已有刷新令牌
+        // ��查用户是否已有刷新令牌
         Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
         if (existingToken.isPresent()) {
             System.out.println("发现用户ID:" + userId + "的现有令牌，正在删除...");
@@ -73,5 +77,14 @@ public class RefreshTokenService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("未找到用户"));
         refreshTokenRepository.deleteByUser(user);
+    }
+
+    /**
+     * 从用户名生成JWT令牌
+     * @param username 用户名
+     * @return JWT令牌
+     */
+    public String generateJwtToken(String username) {
+        return jwtTokenProvider.generateTokenFromUsername(username);
     }
 }

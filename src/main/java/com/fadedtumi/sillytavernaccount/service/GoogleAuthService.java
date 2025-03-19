@@ -4,41 +4,51 @@ import com.fadedtumi.sillytavernaccount.dto.AuthResponse;
 import com.fadedtumi.sillytavernaccount.entity.RefreshToken;
 import com.fadedtumi.sillytavernaccount.entity.User;
 import com.fadedtumi.sillytavernaccount.repository.UserRepository;
-import com.fadedtumi.sillytavernaccount.security.JwtTokenProvider;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class GoogleAuthService {
     private static final Logger logger = LoggerFactory.getLogger(GoogleAuthService.class);
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String clientId;
+    private String googleClientId;
+
+    @Value("${app.google.proxy.enabled:false}")
+    private boolean proxyEnabled;
+
+    @Value("${app.google.proxy.host:}")
+    private String proxyHost;
+
+    @Value("${app.google.proxy.port:0}")
+    private int proxyPort;
+
+    @Value("${app.google.proxy.type:HTTP}")
+    private String proxyType;
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private JwtTokenProvider tokenProvider;
 
     @Autowired
     private RefreshTokenService refreshTokenService;
@@ -46,134 +56,112 @@ public class GoogleAuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private EmailVerificationService emailVerificationService;
-
     @Transactional
-    public AuthResponse authenticateWithGoogle(String idTokenString) throws GeneralSecurityException, IOException {
-        // 设置 Google ID Token 验证器
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                .setAudience(Collections.singletonList(clientId))
+    public Map<String, Object> authenticateWithGoogle(String idTokenString) throws GeneralSecurityException, IOException {
+        HttpTransport transport;
+
+        // 如果启用了代理，创建带代理的HttpTransport
+        if (proxyEnabled && !proxyHost.isEmpty() && proxyPort > 0) {
+            logger.info("使用代理连接Google: {}:{} 类型: {}", proxyHost, proxyPort, proxyType);
+            Proxy.Type type = "SOCKS".equalsIgnoreCase(proxyType) ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
+            Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));
+            transport = new NetHttpTransport.Builder().setProxy(proxy).build();
+        } else {
+            transport = new NetHttpTransport();
+        }
+
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+                .setAudience(Collections.singletonList(googleClientId))
                 .build();
 
-        // 验证 ID Token
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {
-            logger.error("无效的ID令牌");
-            throw new RuntimeException("无效的ID令牌");
+            throw new RuntimeException("无效的Google ID token");
         }
 
-        // 获取用户信息
         Payload payload = idToken.getPayload();
-        String googleId = payload.getSubject();
         String email = payload.getEmail();
-        boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
+        String googleId = payload.getSubject();
         String name = (String) payload.get("name");
         String pictureUrl = (String) payload.get("picture");
-        String givenName = (String) payload.get("given_name");
-        String familyName = (String) payload.get("family_name");
 
-        logger.info("Google用户信息: ID={}, Email={}, 已验证={}, 名称={}", googleId, email, emailVerified, name);
+        // 查找是否已有此邮箱的用户
+        User user = userRepository.findByEmail(email).orElse(null);
 
-        // 如果邮箱未验证，拒绝登录
-        if (!emailVerified) {
-            throw new RuntimeException("Google邮箱未验证，无法登录");
+        Map<String, Object> result = new HashMap<>();
+
+        if (user == null) {
+            // 新用户，需要设置用户名和密码
+            result.put("isNewUser", true);
+            result.put("email", email);
+            result.put("googleId", googleId);
+            result.put("name", name);
+            result.put("pictureUrl", pictureUrl);
+            result.put("suggestedUsername", email.split("@")[0]);
+        } else {
+            // 已有用户，更新Google信息
+            user.setGoogleId(googleId);
+            user.setFullName(name);
+            user.setProfileImageUrl(pictureUrl);
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
+            // 创建刷新令牌
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+            // 创建JWT Token
+            String token = refreshTokenService.generateJwtToken(user.getUsername());
+
+            // 返回登录成功信息
+            result.put("isNewUser", false);
+            result.put("authResponse", new AuthResponse(
+                    token,
+                    refreshToken.getToken(),
+                    "Bearer",
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail()
+            ));
         }
 
-        // 查找或创建用户
-        User user = findOrCreateGoogleUser(googleId, email, name, pictureUrl, givenName, familyName);
+        return result;
+    }
 
-        // 更新用户最后登录时间
-        user.setLastLogin(LocalDateTime.now());
+    @Transactional
+    public AuthResponse completeGoogleRegistration(String email, String googleId, String username,
+                                                   String password, String name, String pictureUrl) {
+        // 检查用户名是否已存在
+        if (userRepository.existsByUsername(username)) {
+            throw new RuntimeException("用户名已被使用");
+        }
+
+        // 创建新用户
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setGoogleId(googleId);
+        user.setFullName(name);
+        user.setProfileImageUrl(pictureUrl);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRoles(new java.util.HashSet<>(Collections.singletonList("ROLE_USER")));
+        user.setCreatedAt(LocalDateTime.now());
+        user.setEnabled(true);
+
         userRepository.save(user);
-
-        // 创建自定义身份验证对象
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        user.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getUsername(), "", authorities);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // 生成JWT令牌
-        String jwt = tokenProvider.generateTokenFromUsername(user.getUsername());
 
         // 创建刷新令牌
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
+        // 创建JWT Token
+        String token = refreshTokenService.generateJwtToken(user.getUsername());
+
         return new AuthResponse(
-                jwt,
+                token,
                 refreshToken.getToken(),
                 "Bearer",
                 user.getId(),
                 user.getUsername(),
                 user.getEmail()
         );
-    }
-
-    @Transactional
-    protected User findOrCreateGoogleUser(String googleId, String email, String name,
-                                          String pictureUrl, String givenName, String familyName) {
-        // 首先通过 Google ID 查找用户
-        Optional<User> userByGoogleId = userRepository.findAll().stream()
-                .filter(u -> googleId.equals(u.getGoogleId()))
-                .findFirst();
-
-        if (userByGoogleId.isPresent()) {
-            return userByGoogleId.get();
-        }
-
-        // 如果未找到，则尝试通过邮箱查找
-        Optional<User> userByEmail = userRepository.findByEmail(email);
-
-        if (userByEmail.isPresent()) {
-            // 已存在该邮箱的用户，更新 Google ID 和个人资料
-            User existingUser = userByEmail.get();
-            existingUser.setGoogleId(googleId);
-            existingUser.setProfileImageUrl(pictureUrl);
-            return userRepository.save(existingUser);
-        }
-
-        // 如果都未找到，则创建新用户
-        // 确保邮箱验证状态
-        if (!emailVerificationService.isEmailVerified(email)) {
-            // 创建并标记为已验证
-            emailVerificationService.createVerification(email);
-            emailVerificationService.markAsVerified(
-                    emailVerificationService.findByEmail(email).orElseThrow(() ->
-                            new RuntimeException("创建邮箱验证记录失败"))
-            );
-        }
-
-        // 创建新用户名 (使用 name 并确保唯一性)
-        String usernameBase = name.replaceAll("\\s+", "").toLowerCase();
-        String username = usernameBase;
-        int counter = 1;
-
-        while (userRepository.existsByUsername(username)) {
-            username = usernameBase + counter++;
-        }
-
-        // 创建新用户
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setGoogleId(googleId);
-        newUser.setProfileImageUrl(pictureUrl);
-        newUser.setFullName(name);
-
-        // 设置随机密码 (用户不需要知道，因为使用Google登录)
-        newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-
-        // 设置用户角色
-        Set<String> roles = new HashSet<>();
-        roles.add("ROLE_USER");
-        newUser.setRoles(roles);
-
-        newUser.setEnabled(true);
-        newUser.setCreatedAt(LocalDateTime.now());
-
-        return userRepository.save(newUser);
     }
 }

@@ -1,15 +1,19 @@
 package com.fadedtumi.sillytavernaccount.controller;
 
 import com.fadedtumi.sillytavernaccount.dto.ChangePasswordRequest;
+import com.fadedtumi.sillytavernaccount.dto.DeleteAccountRequest;
 import com.fadedtumi.sillytavernaccount.dto.UpdateUserRequest;
 import com.fadedtumi.sillytavernaccount.entity.User;
 import com.fadedtumi.sillytavernaccount.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -72,5 +76,30 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @DeleteMapping("/delete-account")
+    public ResponseEntity<?> deleteAccount(@Valid @RequestBody DeleteAccountRequest deleteRequest,
+                                           HttpServletRequest request,
+                                           HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        // 验证确认文本
+        if (!"DELETE MY ACCOUNT".equals(deleteRequest.getConfirmation())) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "确认信息不正确，请输入'DELETE MY ACCOUNT'以确认注销"));
+        }
+
+        try {
+            // 执行账户注销
+            userService.deleteUserAccount(username, deleteRequest.getPassword());
+
+            // 执行登出
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+
+            return ResponseEntity.ok(Collections.singletonMap("message", "账户已成功注销"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage()));
+        }
     }
 }

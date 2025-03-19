@@ -103,7 +103,7 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<?> authenticateWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
         try {
-            AuthResponse response = googleAuthService.authenticateWithGoogle(request.getIdToken());
+            AuthResponse response = (AuthResponse) googleAuthService.authenticateWithGoogle(request.getIdToken());
             return ResponseEntity.ok(response);
         } catch (GeneralSecurityException | IOException e) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Google 认证失败: " + e.getMessage()));

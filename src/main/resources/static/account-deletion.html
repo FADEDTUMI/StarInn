@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号注销 - SillyTavern Account</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .delete-account-container {
+            max-width: 450px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        .delete-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .delete-header h2 {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        .delete-header p {
+            color: #6c757d;
+        }
+        .warning-text {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        .confirmation-box {
+            background-color: #f8d7da;
+            border: 1px solid #f5c2c7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            width: 100%;
+        }
+        .btn-cancel {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            width: 100%;
+        }
+        .alert {
+            margin-bottom: 20px;
+            display: none;
+        }
+        .custom-control-label::before {
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="delete-account-container">
+        <div class="delete-header">
+            <h2>账号注销</h2>
+            <p>此操作将永久删除您的账号及所有相关数据</p>
+        </div>
+
+        <div class="alert alert-danger" id="error-message" role="alert"></div>
+        <div class="alert alert-success" id="success-message" role="alert"></div>
+
+        <form id="delete-form">
+            <div class="mb-3">
+                <label for="password" class="form-label">输入您的密码</label>
+                <input type="password" class="form-control" id="password" required>
+                <div class="form-text">请输入您当前的密码以确认身份</div>
+            </div>
+
+            <div class="confirmation-box mb-3">
+                <p class="warning-text">请了解以下信息:</p>
+                <ul>
+                    <li>您的账号将被永久删除，此操作无法撤销</li>
+                    <li>所有与您账号关联的数据将被清除</li>
+                    <li>您将无法再次使用相同的用户名</li>
+                </ul>
+            </div>
+
+            <div class="mb-3">
+                <label for="confirmation" class="form-label">确认注销</label>
+                <input type="text" class="form-control" id="confirmation" placeholder="DELETE MY ACCOUNT" required>
+                <div class="form-text">请输入"DELETE MY ACCOUNT"（全大写）以确认注销</div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="confirm-check" required>
+                <label class="form-check-label" for="confirm-check">我确认要永久删除我的账号及所有数据</label>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-danger btn-delete">注销账号</button>
+                <a href="/" class="btn btn-secondary btn-cancel mt-2">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('delete-form');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+
+        deleteForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 获取表单数据
+            const password = document.getElementById('password').value;
+            const confirmation = document.getElementById('confirmation').value;
+            const confirmCheck = document.getElementById('confirm-check').checked;
+
+            // 隐藏之前的消息
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            // 验证确认文本
+            if (confirmation !== 'DELETE MY ACCOUNT') {
+                errorMessage.textContent = '请正确输入确认文本"DELETE MY ACCOUNT"（全大写）';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // 验证确认复选框
+            if (!confirmCheck) {
+                errorMessage.textContent = '请确认您了解删除账号的后果';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            try {
+                // 获取JWT令牌
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) {
+                    errorMessage.textContent = '您未登录，请先登录后再尝试注销账号';
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
+                    return;
+                }
+
+                // 发送删除账号请求
+                const response = await fetch('/api/user/delete-account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        password: password,
+                        confirmation: confirmation
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 注销成功
+                    successMessage.textContent = data.message || '账号已成功注销';
+                    successMessage.style.display = 'block';
+
+                    // 清除本地存储的令牌
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('userData');
+
+                    // 2秒后重定向到首页
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    // 显示错误消息
+                    errorMessage.textContent = data.message || '注销账号失败，请稍后再试';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('删除账号时出错:', error);
+                errorMessage.textContent = '发生错误，请稍后再试';
+                errorMessage.style.display = 'block';
+            }
+        });
+    });
+</script>
+</body>
+</html>

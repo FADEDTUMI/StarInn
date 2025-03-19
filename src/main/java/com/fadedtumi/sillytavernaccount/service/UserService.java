@@ -3,6 +3,8 @@ package com.fadedtumi.sillytavernaccount.service;
 import com.fadedtumi.sillytavernaccount.dto.ChangePasswordRequest;
 import com.fadedtumi.sillytavernaccount.dto.UpdateUserRequest;
 import com.fadedtumi.sillytavernaccount.entity.User;
+import com.fadedtumi.sillytavernaccount.repository.DeviceTokenRepository;
+import com.fadedtumi.sillytavernaccount.repository.RefreshTokenRepository;
 import com.fadedtumi.sillytavernaccount.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +21,12 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private DeviceTokenRepository deviceTokenRepository;
 
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -69,5 +77,30 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    /**
+     * 注销用户账���
+     * @param username 用户名
+     * @param password 当前密码（用于验证）
+     */
+    @Transactional
+    public void deleteUserAccount(String username, String password) {
+        User user = getUserByUsername(username);
+
+        // 验证密码是否正确
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("密码不正确，无法注销账户");
+        }
+
+        // 删除用户相关的所有数据
+        // 1. 删除刷新令牌
+        refreshTokenRepository.deleteByUser(user);
+
+        // 2. 删除设备令牌
+        deviceTokenRepository.deleteByUser(user);
+
+        // 3. 最后删除用户��身
+        userRepository.delete(user);
     }
 }

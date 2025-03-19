@@ -35,6 +35,14 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    // 添加 Google ID 字段
+    @Column(name = "google_id")
+    private String googleId;
+
+    // 添加个人资料图片 URL 字段
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")

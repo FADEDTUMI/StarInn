@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>检查管理员权限</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 500px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            margin-top: 20px;
+            color: #555;
+        }
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>正在验证管理员权限</h2>
+    <div class="loader" id="loader"></div>
+    <p class="message" id="message">请稍候，正在验证您的权限...</p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 从localStorage获取token
+        const token = localStorage.getItem('accessToken');
+
+        if (!token) {
+            showError('未找到登录信息，请先登录');
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+            return;
+        }
+
+        // 验证管理员权限
+        fetch('/api/admin/check-permission', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('权限验证失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.hasPermission) {
+                    document.getElementById('message').textContent = '验证成功，正在跳转到管理面板...';
+                    setTimeout(() => {
+                        window.location.href = '/admin/index.html';
+                    }, 1000);
+                } else {
+                    showError('您没有管理员权限');
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                showError('验证失败: ' + error.message);
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 2000);
+            });
+    });
+
+    function showError(message) {
+        document.getElementById('loader').style.display = 'none';
+        const messageEl = document.getElementById('message');
+        messageEl.textContent = message;
+        messageEl.classList.add('error');
+    }
+</script>
+</body>
+</html>

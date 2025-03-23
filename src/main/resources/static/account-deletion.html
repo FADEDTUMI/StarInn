@@ -3,194 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>账号注销 - SillyTavern Account</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>账户注销 - SillyTavern 账户系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f8f9fa;
-            padding-top: 50px;
+            padding-top: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .delete-account-container {
-            max-width: 450px;
+        .deletion-container {
+            max-width: 500px;
             margin: 0 auto;
             background-color: #fff;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
             padding: 30px;
         }
-        .delete-header {
+        .logo {
             text-align: center;
             margin-bottom: 25px;
         }
-        .delete-header h2 {
-            color: #dc3545;
+        .logo h1 {
+            color: #343a40;
             font-weight: 600;
         }
-        .delete-header p {
-            color: #6c757d;
+        .alert-danger {
+            border-left: 5px solid #dc3545;
         }
-        .warning-text {
-            color: #dc3545;
-            font-weight: 600;
-        }
-        .confirmation-box {
-            background-color: #f8d7da;
-            border: 1px solid #f5c2c7;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 15px 0;
-        }
-        .btn-delete {
+        .btn-danger {
             background-color: #dc3545;
             border-color: #dc3545;
-            width: 100%;
+            font-weight: 500;
         }
-        .btn-cancel {
+        .btn-secondary {
             background-color: #6c757d;
             border-color: #6c757d;
-            width: 100%;
+            font-weight: 500;
         }
-        .alert {
-            margin-bottom: 20px;
-            display: none;
-        }
-        .custom-control-label::before {
+        .form-control:focus {
             border-color: #dc3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+        }
+        .deletion-warning {
+            background-color: #fff8f8;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #googleAuthSection {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .text-danger {
+            color: #dc3545 !important;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="delete-account-container">
-        <div class="delete-header">
-            <h2>账号注销</h2>
-            <p>此操作将永久删除您的账号及所有相关数据</p>
+    <div class="deletion-container">
+        <div class="logo">
+            <h1>SillyTavern 账户</h1>
+            <p class="text-muted">账户注销</p>
+        </div>
+        <div class="deletion-warning">
+            <h5 class="text-danger">⚠️ 警告：此操作不可逆</h5>
+            <p>注销账户将永久删除您的所有数据，包括：</p>
+            <ul>
+                <li>个人资料信息</li>
+                <li>设备关联</li>
+                <li>登录令牌</li>
+                <li>所有用户数据</li>
+            </ul>
+            <p class="mb-0">注销后，您将无法恢复任何数据。</p>
         </div>
 
-        <div class="alert alert-danger" id="error-message" role="alert"></div>
-        <div class="alert alert-success" id="success-message" role="alert"></div>
+        <div id="authStatus" class="alert alert-info">
+            请先登录后继续操作
+        </div>
 
-        <form id="delete-form">
+        <form id="deletionForm" style="display: none;">
             <div class="mb-3">
-                <label for="password" class="form-label">输入您的密码</label>
-                <input type="password" class="form-control" id="password" required>
-                <div class="form-text">请输入您当前的密码以确认身份</div>
-            </div>
-
-            <div class="confirmation-box mb-3">
-                <p class="warning-text">请了解以下信息:</p>
-                <ul>
-                    <li>您的账号将被永久删除，此操作无法撤销</li>
-                    <li>所有与您账号关联的数据将被清除</li>
-                    <li>您将无法再次使用相同的用户名</li>
-                </ul>
+                <label for="emailVerification" class="form-label">确认您的邮箱</label>
+                <input type="email" class="form-control" id="emailVerification" placeholder="请输入您的邮箱" required>
+                <div class="form-text">请输入与您账户关联的邮箱地址以确认身份</div>
             </div>
 
             <div class="mb-3">
-                <label for="confirmation" class="form-label">确认注销</label>
-                <input type="text" class="form-control" id="confirmation" placeholder="DELETE MY ACCOUNT" required>
-                <div class="form-text">请输入"DELETE MY ACCOUNT"（全大写）以确认注销</div>
+                <label for="password" class="form-label">账户密码</label>
+                <input type="password" class="form-control" id="password" placeholder="请输入您的密码" required>
+                <div class="form-text">请输入您的账户密码以确认身份</div>
             </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="confirm-check" required>
-                <label class="form-check-label" for="confirm-check">我确认要永久删除我的账号及所有数据</label>
+            <div id="googleAuthSection">
+                <div class="alert alert-warning">
+                    <strong>Google账户提示：</strong> 您的账户与Google关联，注销后将解除此关联。
+                </div>
             </div>
+
+            <div class="mb-3">
+                <label for="confirmText" class="form-label">确认注销</label>
+                <input type="text" class="form-control" id="confirmText"
+                       placeholder="输入 DELETE MY ACCOUNT" required>
+                <div class="form-text">请输入 <strong>DELETE MY ACCOUNT</strong> 以确认注销</div>
+            </div>
+
+            <div class="loading-spinner" id="spinner">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">正在处理...</span>
+                </div>
+                <p>正在处理您的请求...</p>
+            </div>
+
+            <div id="errorMessage" class="alert alert-danger" style="display: none;" role="alert" aria-live="assertive"></div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-danger btn-delete">注销账号</button>
-                <a href="/" class="btn btn-secondary btn-cancel mt-2">取消</a>
+                <button type="submit" class="btn btn-danger" id="deleteButton">永久注销账户</button>
+                <a href="/" class="btn btn-secondary">取消操作</a>
             </div>
         </form>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const deleteForm = document.getElementById('delete-form');
-        const errorMessage = document.getElementById('error-message');
-        const successMessage = document.getElementById('success-message');
+        const token = localStorage.getItem('accessToken');
+        const authStatus = document.getElementById('authStatus');
+        const deletionForm = document.getElementById('deletionForm');
+        const googleAuthSection = document.getElementById('googleAuthSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const spinner = document.getElementById('spinner');
+        let userEmail = '';
+        let isGoogleAccount = false;
 
-        deleteForm.addEventListener('submit', async function(e) {
+        // 检查用户是否已登录
+        if (!token) {
+            authStatus.innerHTML = '您需要先<a href="/login.html">登录</a>才能注销账户';
+            return;
+        }
+
+        // 获取用户信息
+        fetch('/api/user/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('未授权访问，请重新登录');
+                }
+                return response.json();
+            })
+            .then(data => {
+                authStatus.innerHTML = `已登录为: <strong>${data.username}</strong> (${data.email})`;
+                authStatus.className = 'alert alert-success';
+                deletionForm.style.display = 'block';
+                userEmail = data.email;
+
+                // 自动填充邮箱字段
+                document.getElementById('emailVerification').value = data.email;
+
+                // 检查是否为Google账户
+                if (data.googleId) {
+                    isGoogleAccount = true;
+                    googleAuthSection.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                authStatus.innerHTML = `错误: ${error.message}`;
+                authStatus.className = 'alert alert-danger';
+            });
+
+        // 处理表单提交
+        deletionForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // 获取表单数据
-            const password = document.getElementById('password').value;
-            const confirmation = document.getElementById('confirmation').value;
-            const confirmCheck = document.getElementById('confirm-check').checked;
+            // 在表单提交事件的开始处添加
+            if (!confirm('您确定要永久删除您的账户吗？此操作不可撤销。')) {
+                return;
+            }
 
-            // 隐藏之前的消息
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            const emailVerification = document.getElementById('emailVerification').value;
+            const password = document.getElementById('password').value;
+            const confirmText = document.getElementById('confirmText').value;
+
+            // 验证邮箱
+            if (emailVerification !== userEmail) {
+                showError('邮箱地址不匹配，请确认后重试');
+                return;
+            }
 
             // 验证确认文本
-            if (confirmation !== 'DELETE MY ACCOUNT') {
-                errorMessage.textContent = '请正确输入确认文本"DELETE MY ACCOUNT"（全大写）';
-                errorMessage.style.display = 'block';
+            if (confirmText !== 'DELETE MY ACCOUNT') {
+                showError('确认文本不正确，请输入 DELETE MY ACCOUNT');
                 return;
             }
 
-            // 验证确认复选框
-            if (!confirmCheck) {
-                errorMessage.textContent = '请确认您了解删除账号的后果';
-                errorMessage.style.display = 'block';
-                return;
-            }
+            // 显示加载状态
+            spinner.style.display = 'block';
+            document.getElementById('deleteButton').disabled = true;
 
-            try {
-                // 获取JWT令牌
-                const token = localStorage.getItem('accessToken');
-
-                if (!token) {
-                    errorMessage.textContent = '您未登录，请先登录后再尝试注销账号';
-                    errorMessage.style.display = 'block';
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 2000);
-                    return;
-                }
-
-                // 发送删除账号请求
-                const response = await fetch('/api/user/delete-account', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        password: password,
-                        confirmation: confirmation
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // 注销成功
-                    successMessage.textContent = data.message || '账号已成功注销';
-                    successMessage.style.display = 'block';
-
-                    // 清除本地存储的令牌
+            // 发送删除请求
+            fetch('/api/user/delete-account', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    password: password,
+                    confirmation: confirmText
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || '注销失败，请稍后重试');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 注销成功，清除本地存储
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('userData');
+                    localStorage.removeItem('user');
 
-                    // 2秒后重定向到首页
+                    // 显示成功消息
+                    deletionForm.innerHTML = `
+                        <div class="alert alert-success">
+                            <h4>账户已成功注销</h4>
+                            <p>${data.message}</p>
+                            <p>您将在5秒后被重定向到首页...</p>
+                        </div>
+                    `;
+
+                    // 重定向至登录
                     setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                } else {
-                    // 显示错误消息
-                    errorMessage.textContent = data.message || '注销账号失败，请稍后再试';
-                    errorMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('删除账号时出错:', error);
-                errorMessage.textContent = '发生错误，请稍后再试';
-                errorMessage.style.display = 'block';
-            }
+                        window.location.href = '/login.html';
+                    }, 5000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showError(error.message);
+                    spinner.style.display = 'none';
+                    document.getElementById('deleteButton').disabled = false;
+                });
         });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+
+            // 5秒后自动隐藏错误信息
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
     });
 </script>
 </body>

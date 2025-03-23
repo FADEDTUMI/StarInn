@@ -100,6 +100,6 @@ public class AdminController {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), "Bearer", user.getId(),
-                user.getUsername(), user.getEmail()));
+                user.getUsername(), user.getEmail(), user.getRoles()));
     }
 }

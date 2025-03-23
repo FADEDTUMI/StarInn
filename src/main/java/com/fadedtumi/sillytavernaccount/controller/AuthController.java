@@ -6,14 +6,14 @@ import com.fadedtumi.sillytavernaccount.service.AuthService;
 import com.fadedtumi.sillytavernaccount.service.DeviceTokenService;
 import com.fadedtumi.sillytavernaccount.service.GoogleAuthService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +21,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthService authService;
@@ -100,13 +102,69 @@ public class AuthController {
         return ResponseEntity.ok(Collections.singletonMap("message", "设备令牌已移除"));
     }
 
-    @PostMapping("/google")
-    public ResponseEntity<?> authenticateWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+    // 第一阶段：验证Google ID令牌
+    @PostMapping("/google-oauth")
+    public ResponseEntity<?> authenticateWithGoogle(@RequestBody Map<String, String> request) {
         try {
-            AuthResponse response = (AuthResponse) googleAuthService.authenticateWithGoogle(request.getIdToken());
+            String idToken = request.get("idToken");
+            logger.info("收到Google认证请求，idToken长度: {}", idToken != null ? idToken.length() : 0);
+
+            if (idToken == null || idToken.isEmpty()) {
+                logger.error("idToken为空");
+                return ResponseEntity.badRequest().body(Map.of("message", "ID令牌不能为空"));
+            }
+
+            GoogleAuthResponse response = googleAuthService.validateGoogleToken(idToken);
+            logger.info("Google认证成功，用户邮箱: {}, 是否新用户: {}", response.getEmail(), response.isNewUser());
             return ResponseEntity.ok(response);
-        } catch (GeneralSecurityException | IOException e) {
-            return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Google 认证失败: " + e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Google认证过程中发生错误", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 第二阶段：完成Google登录流程
+    @PostMapping("/google-oauth/complete")
+    public ResponseEntity<?> completeGoogleAuth(@RequestBody Map<String, String> request) {
+        try {
+            String tempToken = request.get("tempToken");
+            String username = request.get("username");
+            String password = request.get("password");
+
+            logger.info("完成Google认证流程，用户名: {}", username);
+
+            if (tempToken == null || username == null || password == null) {
+                logger.error("完成Google认证的请求参数不完整");
+                return ResponseEntity.badRequest().body(Map.of("message", "请求参数不完整"));
+            }
+
+            AuthResponse response = googleAuthService.completeGoogleAuth(tempToken, username, password);
+            logger.info("Google认证完成流程成功，用户ID: {}", response.getId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("完成Google认证流程时发生错误", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 新增：处理已有用户的Google直接登录
+    @PostMapping("/google-oauth/login")
+    public ResponseEntity<?> loginExistingUserWithGoogle(@RequestBody GoogleLoginExistingRequest request) {
+        try {
+            String tempToken = request.getTempToken();
+            logger.info("已有用户的Google登录请求");
+
+            if (tempToken == null || tempToken.isEmpty()) {
+                logger.error("临时令牌为空");
+                return ResponseEntity.badRequest().body(Map.of("message", "临时令牌不能为空"));
+            }
+
+            AuthResponse response = googleAuthService.loginWithGoogle(tempToken);
+            logger.info("已有用户的Google登录成功，用户ID: {}", response.getId());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("已有用户Google登录过程中发生错误", e);
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

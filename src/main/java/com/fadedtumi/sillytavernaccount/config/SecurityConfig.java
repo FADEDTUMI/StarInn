@@ -66,8 +66,9 @@ public class SecurityConfig {
                 // 配置请求授权
                 .authorizeHttpRequests(auth -> {
                     // 静态资源
-                    auth.requestMatchers("/", "/index.html", "/google-login.html", "/verification-result.html",
-                            "/account-deletion.html", "/css/**", "/js/**", "/favicon.ico").permitAll();
+                    auth.requestMatchers("/", "/index.html", "/login.html", "/google-login.html", "/verification-result.html",
+                            "/account-deletion.html","/google-setup.html", "/admin/**", "/admin.html", "/css/**", "/js/**",
+                             "/img/**", "/admin-check.html").permitAll();
                     // 公共接口
                     auth.requestMatchers("/api/test/**").permitAll();
                     // 认证接口
@@ -78,7 +79,9 @@ public class SecurityConfig {
                     // 用户资料API - 确保能访问
                     auth.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN");
                     auth.requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN");
-                    // 添加其他需要特别处理的路径
+                    // 管理员API，只允许ADMIN角色访问
+                    auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
+                    // 添加其他需要特别处理的路径;
                     // ...
                     // 其他任何请求需要认证
                     auth.anyRequest().authenticated();
@@ -98,8 +101,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Auth-Token", "*"));
-        configuration.setExposedHeaders(Arrays.asList("X-Auth-Token", "Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // 预检请求结果缓存1小时
 
@@ -107,5 +110,9 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         logger.info("CORS配置已创建");
         return source;
+    }
+
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
     }
 }

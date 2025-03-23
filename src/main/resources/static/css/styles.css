@@ -1,0 +1,591 @@
+:root {
+    /* 亮色模式变量 */
+    --primary-color: #4285f4;
+    --primary-hover: #3367d6;
+    --secondary-color: #6c757d;
+    --text-color: #333333;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --sidebar-bg: #ffffff;
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --header-bg: #ffffff;
+    --modal-bg: #ffffff;
+    --input-bg: #ffffff;
+    --toast-bg: rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="dark"] {
+    /* 暗色模式变量 */
+    --primary-color: #5c9eff;
+    --primary-hover: #7baeff;
+    --secondary-color: #adb5bd;
+    --text-color: #e9ecef;
+    --bg-color: #212529;
+    --card-bg: #343a40;
+    --sidebar-bg: #2c3136;
+    --border-color: #495057;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --success-color: #48c774;
+    --danger-color: #f14668;
+    --warning-color: #ffdd57;
+    --info-color: #3e8ed0;
+    --header-bg: #2c3136;
+    --modal-bg: #343a40;
+    --input-bg: #2c3136;
+    --toast-bg: rgba(33, 37, 41, 0.95);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* 按钮样式 */
+.primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.primary-btn:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.secondary-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.danger-btn {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.danger-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* 主题切换按钮 */
+.theme-switch {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.theme-switch:hover {
+    transform: rotate(30deg);
+}
+
+/* 表单元素 */
+input, select, textarea {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+    outline: none;
+}
+
+/* 表格样式 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+th, td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+th {
+    background-color: var(--card-bg);
+    font-weight: 600;
+}
+
+tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 卡片样式 */
+.card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px var(--shadow-color);
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 提示消息 */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    background-color: var(--toast-bg);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-success {
+    border-left: 4px solid var(--success-color);
+}
+
+.toast-error {
+    border-left: 4px solid var(--danger-color);
+}
+
+.toast-warning {
+    border-left: 4px solid var(--warning-color);
+}
+
+.toast-info {
+    border-left: 4px solid var(--info-color);
+}
+
+/* 加载动画 */
+.loader {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+}
+
+:root {
+    --primary-color: #4285f4;
+    --primary-hover: #3367d6;
+    --secondary-color: #6c757d;
+    --text-color: #333;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.1);
+    --border-color: #dadce0;
+    --error-color: #dc3545;
+    --success-color: #198754;
+}
+
+[data-theme="dark"] {
+    --primary-color: #5c9eff;
+    --primary-hover: #7baeff;
+    --secondary-color: #adb5bd;
+    --text-color: #e9ecef;
+    --bg-color: #212529;
+    --card-bg: #343a40;
+    --card-shadow: rgba(0, 0, 0, 0.3);
+    --border-color: #495057;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.login-container {
+    max-width: 420px;
+    width: 100%;
+    margin: 40px auto;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px var(--card-shadow);
+    background-color: var(--card-bg);
+    transition: all 0.3s ease;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.logo img {
+    max-width: 150px;
+    height: auto;
+    transition: transform 0.3s;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-header h3 {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.login-header p {
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(66, 133, 244, 0.25);
+}
+
+.form-floating > label {
+    padding: 0.75rem 1rem;
+    color: var(--secondary-color);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    color: var(--primary-color);
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-login:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.google-btn {
+    width: 100%;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.google-btn:hover {
+    background-color: rgba(66, 133, 244, 0.08);
+    transform: translateY(-2px);
+}
+
+.google-btn:active {
+    transform: translateY(0);
+}
+
+.google-btn img {
+    width: 18px;
+    margin-right: 10px;
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.register-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.register-link a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+.alert {
+    display: none;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    color: var(--error-color);
+}
+
+.alert-success {
+    background-color: rgba(25, 135, 84, 0.1);
+    border: 1px solid rgba(25, 135, 84, 0.2);
+    color: var(--success-color);
+}
+
+.forget-password {
+    text-align: right;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.forget-password a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.forget-password a:hover {
+    text-decoration: underline;
+}
+
+.theme-switch {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.theme-switch:hover {
+    transform: rotate(30deg);
+}
+
+.loader {
+    display: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.form-error {
+    color: var(--error-color);
+    font-size: 0.8rem;
+    margin-top: -0.75rem;
+    margin-bottom: 0.75rem;
+    display: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+    .login-container {
+        margin: 1rem;
+        padding: 1.5rem;
+        border-radius: 10px;
+    }
+
+    .logo img {
+        max-width: 120px;
+    }
+
+    .form-control, .btn-login, .google-btn {
+        padding: 0.65rem;
+    }
+
+    .theme-switch {
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+}
+
+/* 简单的淡入动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-container {
+    animation: fadeIn 0.5s ease-out;
+}
+/* 按钮悬停效果 */
+.login-btn, .google-btn {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-btn:hover, .google-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 输入框聚焦效果 */
+.form-input {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+}
+
+/* 登录容器加载动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.login-container {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+/* Google按钮特效 */
+.google-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.google-btn::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(100, 100);
+        opacity: 0;
+    }
+}
+
+.google-btn:active::after {
+    animation: ripple 0.6s ease-out;
+}

@@ -3,318 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google登录测试</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Google 登录 - SillyTavern Account</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
-            word-break: break-all;
-            text-align: left;
-            display: none;
-        }
-        .success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-        .registration-form {
-            display: none;
-            margin-top: 20px;
-            text-align: left;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .form-group .hint {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .form-group .error-message {
-            font-size: 12px;
-            color: #dc3545;
-            margin-top: 5px;
-            display: none;
-        }
-        button {
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 15px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #357ae8;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 10px 0;
-        }
-        .spinner {
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid #3498db;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <link rel="stylesheet" href="css/googlelogin.css">
 </head>
 <body>
-<div class="container">
-    <h2>Google登录测试</h2>
-    <p>点击下面的按钮使用Google账号登录</p>
+<div class="login-container">
+    <div class="login-logo">
+        <img src="https://raw.githubusercontent.com/SillyTavern/SillyTavern/master/public/img/logo.png" alt="SillyTavern Logo">
+    </div>
+    <h2>使用 Google 账号登录</h2>
+    <p class="subtitle">安全、快捷地登录您的 SillyTavern 账号</p>
 
     <div id="g_id_onload"
          data-client_id="539591615524-4et3c0a83lsgrfhvmjr4ljkvpkgb7var.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse">
-    </div>
-    <div class="g_id_signin" data-type="standard"></div>
-
-    <!-- 注册表单 -->
-    <div id="registration-form" class="registration-form">
-        <h3>完成注册</h3>
-        <p>请设置您的用户名和密码以完成注册</p>
-
-        <div class="form-group">
-            <label for="username">用户名</label>
-            <input type="text" id="username" name="username" required>
-            <div class="hint">用户名只能包含英文字母、数字和下划线</div>
-            <div class="error-message" id="username-error"></div>
-        </div>
-
-        <div class="form-group">
-            <label for="password">密码</label>
-            <input type="password" id="password" name="password" required>
-            <div class="hint">密码必须至少包含一个数字、一个小写字母、一个大写字母，且长度不少于8位</div>
-            <div class="error-message" id="password-error"></div>
-        </div>
-
-        <div class="loading">
-            <div class="spinner"></div>
-            <p>处理中，请稍候...</p>
-        </div>
-
-        <button id="complete-registration">完成注册</button>
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleGoogleSignIn"
+         data-auto_prompt="false">
     </div>
 
-    <div id="result" class="result"></div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="rectangular"
+         data-theme="outline"
+         data-text="signin_with"
+         data-size="large"
+         data-logo_alignment="left">
+    </div>
+
+    <div id="loader-container" class="loader-container" style="display: none;">
+        <div class="loader"></div>
+    </div>
+    <div id="message" class="message" style="display: none;"></div>
+
+    <a href="/login.html" class="back-button">返回登录页面</a>
 </div>
 
-<script>
-    let googleUserData = null;
-
-    // 验证用户名格式
-    function validateUsername(username) {
-        const regex = /^[a-zA-Z0-9_]+$/;
-        return regex.test(username);
-    }
-
-    // 验证密码格式
-    function validatePassword(password) {
-        const regex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-        return regex.test(password);
-    }
-
-    // Google认证回调函数
-    function handleCredentialResponse(response) {
-        console.log("Google ID令牌:", response.credential);
-
-        // 发送ID令牌到后端
-        fetch('/api/auth/google-oauth', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                idToken: response.credential
-            })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || '登录失败');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.isNewUser) {
-                    // 新用户，显示注册表单
-                    googleUserData = {
-                        email: data.email,
-                        googleId: data.googleId,
-                        name: data.name,
-                        pictureUrl: data.pictureUrl,
-                        suggestedUsername: data.suggestedUsername
-                    };
-
-                    // 预填充建议的用户名
-                    document.getElementById('username').value = googleUserData.suggestedUsername || '';
-
-                    // 显示注册表单
-                    document.getElementById('registration-form').style.display = 'block';
-                } else {
-                    // 已有用户，直接登录成功
-                    showSuccessMessage(data.authResponse);
-                }
-            })
-            .catch(error => {
-                showErrorMessage(error.message);
-            });
-    }
-
-    // 显示成功消息
-    function showSuccessMessage(authData) {
-        const resultDiv = document.getElementById('result');
-        resultDiv.className = 'result success';
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<strong>登录成功!</strong><br>' +
-            '用户名: ' + authData.username + '<br>' +
-            '邮箱: ' + authData.email + '<br>' +
-            'Token: ' + authData.token.substring(0,50) + '...';
-
-        // 隐藏注册表单
-        document.getElementById('registration-form').style.display = 'none';
-
-        // 存储令牌
-        localStorage.setItem('auth_token', authData.token);
-        localStorage.setItem('refresh_token', authData.refreshToken);
-
-        console.log('认证结果:', authData);
-    }
-
-    // 显示错误消息
-    function showErrorMessage(message) {
-        const resultDiv = document.getElementById('result');
-        resultDiv.className = 'result error';
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<strong>登录失败:</strong> ' + message;
-    }
-
-    // 绑定完成注册按钮事件
-    document.getElementById('complete-registration').addEventListener('click', function() {
-        // 获取表单值
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        // 重置错误消息
-        document.getElementById('username-error').style.display = 'none';
-        document.getElementById('password-error').style.display = 'none';
-
-        // 验证用户名
-        if (!validateUsername(username)) {
-            const usernameError = document.getElementById('username-error');
-            usernameError.textContent = '用户名格式不正确，只能包含英文字母、数字和下划线';
-            usernameError.style.display = 'block';
-            return;
-        }
-
-        // 验证密码
-        if (!validatePassword(password)) {
-            const passwordError = document.getElementById('password-error');
-            passwordError.textContent = '密码必须至少包含一个数字、一个小写字母、一个大写字母，且长度不少于8位';
-            passwordError.style.display = 'block';
-            return;
-        }
-
-        // 显示加载状态
-        document.querySelector('.loading').style.display = 'block';
-        document.getElementById('complete-registration').disabled = true;
-
-        // 发送完成注册请求
-        fetch('/api/auth/google-complete-registration', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: googleUserData.email,
-                googleId: googleUserData.googleId,
-                username: username,
-                password: password,
-                name: googleUserData.name,
-                pictureUrl: googleUserData.pictureUrl
-            })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || '注册失败');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 隐藏加载状态
-                document.querySelector('.loading').style.display = 'none';
-                document.getElementById('complete-registration').disabled = false;
-
-                // 显示成功信息
-                showSuccessMessage(data);
-            })
-            .catch(error => {
-                // 隐藏加载状态
-                document.querySelector('.loading').style.display = 'none';
-                document.getElementById('complete-registration').disabled = false;
-
-                // 显示错误信息
-                showErrorMessage(error.message);
-            });
-    });
+<script src="js/googlelogin.js">
 </script>
 </body>
 </html>

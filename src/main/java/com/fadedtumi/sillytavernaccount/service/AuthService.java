@@ -100,7 +100,8 @@ public class AuthService {
                 "Bearer",
                 user.getId(),
                 user.getUsername(),
-                user.getEmail()
+                user.getEmail(),
+                user.getRoles()  // 添加角色信息
         );
     }
 
@@ -118,7 +119,8 @@ public class AuthService {
                             "Bearer",
                             user.getId(),
                             user.getUsername(),
-                            user.getEmail()
+                            user.getEmail(),
+                            user.getRoles()  // 添加角色信息
                     );
                 })
                 .orElseThrow(() -> new RuntimeException("刷新令牌不存在"));

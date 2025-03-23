@@ -5,13 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -19,22 +13,6 @@ import java.util.List;
 @Configuration
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
-
-    @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-
-        // 允许接收任何来源的请求
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-
-        source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
-    }
-
     /**
      * 配置消息转换器，确保使用UTF-8编码
      */
@@ -71,4 +49,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/", "classpath:/public/",
                         "classpath:/resources/", "classpath:/META-INF/resources/");
     }
+
+    // 移除这个方法，避免与SecurityConfig中的CORS配置冲突
+    // @Override
+    // public void addCorsMappings(CorsRegistry registry) { ... }
+
+    // 移除这个Bean，避免与SecurityConfig中的CORS配置冲突
+    // @Bean
+    // public CorsFilter corsFilter() { ... }
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SillyTavern用户登录页面">
+    <title>SillyTavern - 用户登录</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<button class="theme-switch" id="theme-switch" title="切换主题">
+    <i class="fas fa-moon"></i>
+</button>
+
+<div class="container">
+    <div class="login-container">
+        <div class="logo">
+            <img src="https://raw.githubusercontent.com/SillyTavern/SillyTavern/master/public/img/logo.png" alt="SillyTavern Logo">
+        </div>
+        <div class="login-header">
+            <h3>欢迎使用 SillyTavern</h3>
+            <p>请登录您的账户以继续</p>
+        </div>
+
+        <div class="alert alert-danger" id="error-message" role="alert"></div>
+        <div class="alert alert-success" id="success-message" role="alert"></div>
+
+        <form id="login-form" novalidate>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="username" name="username" placeholder="用户名" required>
+                <label for="username">用户名</label>
+                <div class="form-error" id="username-error">请输入用户名</div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="密码" required>
+                <label for="password">密码</label>
+                <div class="form-error" id="password-error">请输入密码</div>
+            </div>
+
+            <div class="forget-password">
+                <a href="#" id="forgot-password">忘记密码？</a>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                登录
+                <span class="loader" id="login-loader"></span>
+            </button>
+        </form>
+
+        <button class="google-btn" id="google-login-btn">
+            <img src="/img/google-logo.png" alt="Google">
+            使用 Google 账号登录
+        </button>
+
+        <div class="register-link">
+            还没有账号？<a href="#" id="register-link">注册新账号</a>
+        </div>
+    </div>
+</div>
+
+<script src="js/login.js">
+
+</script>
+</body>
+</html>

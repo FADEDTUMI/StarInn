@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置账户信息</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .setup-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 400px;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            object-fit: cover;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .error-text {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #3367D6;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="setup-container">
+    <h2>完成您的账户设置</h2>
+    <p>请设置您的用户名和密码以完成注册</p>
+
+    <img id="user-avatar" class="avatar" src="" alt="用户头像">
+    <p id="user-email"></p>
+
+    <form id="setup-form">
+        <div class="form-group">
+            <label for="username">用户名 (仅限英文字母和数字)</label>
+            <input type="text" id="username" name="username" required>
+            <p class="error-text" id="username-error">用户名只能包含英文字母和数字</p>
+        </div>
+
+        <div class="form-group">
+            <label for="password">密码 (至少8位，包含字母和数字)</label>
+            <input type="password" id="password" name="password" required>
+            <p class="error-text" id="password-error">密码至少需要8位，且包含字母和数字</p>
+        </div>
+
+        <div class="form-group">
+            <label for="confirm-password">确认密码</label>
+            <input type="password" id="confirm-password" name="confirmPassword" required>
+            <p class="error-text" id="confirm-password-error">两次输入的密码不一致</p>
+        </div>
+
+        <button type="submit">完成设置</button>
+    </form>
+
+    <div id="loader" class="loader"></div>
+    <div id="message" class="message"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 从URL获取参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const tempToken = urlParams.get('token');
+
+        if (!tempToken) {
+            showMessage('无效的访问，请重新登录', 'error');
+            setTimeout(() => {
+                window.location.href = '/google-login.html';
+            }, 2000);
+            return;
+        }
+
+        // 解析保存的Google信息
+        const googleInfo = JSON.parse(localStorage.getItem('googleAuthInfo') || '{}');
+
+        // 如果有用户信息，展示在页面上
+        if (googleInfo.email) {
+            document.getElementById('user-email').textContent = googleInfo.email;
+            if (googleInfo.pictureUrl) {
+                document.getElementById('user-avatar').src = googleInfo.pictureUrl;
+            } else {
+                document.getElementById('user-avatar').style.display = 'none';
+            }
+
+            // 设置默认用户名
+            if (googleInfo.suggestedUsername) {
+                document.getElementById('username').value = googleInfo.suggestedUsername;
+            }
+        }
+
+        // 表单验证
+        const form = document.getElementById('setup-form');
+        const username = document.getElementById('username');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm-password');
+
+        username.addEventListener('input', function() {
+            validateUsername();
+        });
+
+        password.addEventListener('input', function() {
+            validatePassword();
+            validatePasswordMatch();
+        });
+
+        confirmPassword.addEventListener('input', function() {
+            validatePasswordMatch();
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 验证所有字段
+            const isUsernameValid = validateUsername();
+            const isPasswordValid = validatePassword();
+            const isPasswordMatch = validatePasswordMatch();
+
+            if (isUsernameValid && isPasswordValid && isPasswordMatch) {
+                completeSetup();
+            }
+        });
+
+        function validateUsername() {
+            const regex = /^[a-zA-Z0-9]+$/;
+            const errorElement = document.getElementById('username-error');
+
+            if (!regex.test(username.value)) {
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                errorElement.style.display = 'none';
+                return true;
+            }
+        }
+
+        function validatePassword() {
+            const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+            const errorElement = document.getElementById('password-error');
+
+            if (!regex.test(password.value)) {
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                errorElement.style.display = 'none';
+                return true;
+            }
+        }
+
+        function validatePasswordMatch() {
+            const errorElement = document.getElementById('confirm-password-error');
+
+            if (password.value !== confirmPassword.value) {
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                errorElement.style.display = 'none';
+                return true;
+            }
+        }
+
+        function completeSetup() {
+            // 禁用表单提交按钮，防止重复提交
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = '处理中...';
+
+            // 显示加载状态
+            document.getElementById('loader').style.display = 'block';
+
+            fetch('/google-oauth/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tempToken: tempToken,
+                    username: username.value,
+                    password: password.value
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || '请求失败');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 隐藏加载状态
+                    document.getElementById('loader').style.display = 'none';
+
+                    if (data.token) {
+                        // 登录成功，保存令牌
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        localStorage.removeItem('googleAuthInfo'); // 清除临时存储
+
+                        showMessage('账户设置成功！正在跳转...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 1500);
+                    } else {
+                        showMessage('设置失败：' + (data.message || '未知错误'), 'error');
+                        submitButton.disabled = false;
+                        submitButton.textContent = '完成设置';
+                    }
+                })
+                .catch(error => {
+                    // 隐藏加载状态
+                    document.getElementById('loader').style.display = 'none';
+
+                    showMessage('处理请求时发生错误：' + error.message, 'error');
+                    submitButton.disabled = false;
+                    submitButton.textContent = '完成设置';
+                });
+        }
+    });
+
+    function showMessage(text, type) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.textContent = text;
+        messageDiv.className = 'message ' + type;
+        messageDiv.style.display = 'block';
+    }
+</script>
+</body>
+</html>

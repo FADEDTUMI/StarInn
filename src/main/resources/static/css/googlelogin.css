@@ -1,0 +1,121 @@
+:root {
+    --primary-color: #4285f4;
+    --primary-hover: #3367d6;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --border-color: #dadce0;
+    --success-color: #0f5132;
+    --success-bg: #d1e7dd;
+    --error-color: #842029;
+    --error-bg: #f8d7da;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.login-container {
+    background-color: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 420px;
+    transition: all 0.3s ease;
+}
+
+.login-logo {
+    margin-bottom: 1.5rem;
+}
+
+.login-logo img {
+    max-width: 150px;
+    height: auto;
+}
+
+h2 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.message {
+    margin: 1.25rem 0;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.success {
+    background-color: var(--success-bg);
+    color: var(--success-color);
+    border: 1px solid #badbcc;
+}
+
+.error {
+    background-color: var(--error-bg);
+    color: var(--error-color);
+    border: 1px solid #f5c2c7;
+}
+
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.loader {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(66, 133, 244, 0.2);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.back-button {
+    display: inline-block;
+    margin-top: 1.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.back-button:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+.g_id_signin {
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 1.5rem;
+    }
+}

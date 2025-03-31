@@ -1,5 +1,6 @@
 package com.fadedtumi.sillytavernaccount.service;
 
+import com.fadedtumi.sillytavernaccount.config.AppConfig;
 import com.fadedtumi.sillytavernaccount.dto.AuthResponse;
 import com.fadedtumi.sillytavernaccount.dto.LoginRequest;
 import com.fadedtumi.sillytavernaccount.dto.RefreshTokenRequest;
@@ -42,6 +43,16 @@ public class AuthService {
     @Autowired
     private EmailVerificationService emailVerificationService;
 
+    @Autowired
+    private AppConfig appConfig;
+
+    // 添加验证邀请码的方法
+    private void validateInvitationCode(String code) {
+        if (!appConfig.getInvitationCode().equals(code)) {
+            throw new RuntimeException("邀请码无效");
+        }
+    }
+
     @Transactional
     public User registerUser(RegisterRequest registerRequest) {
         // 检查用户名是否已存在
@@ -55,9 +66,12 @@ public class AuthService {
         }
 
         // 在允许注册前，检查邮箱是否已通过验证
-        if (!emailVerificationService.isEmailVerified(registerRequest.getEmail())) {
-            throw new RuntimeException("邮箱未通过验证，请先验证您的邮箱所有权");
-        }
+//        if (!emailVerificationService.isEmailVerified(registerRequest.getEmail())) {
+//            throw new RuntimeException("邮箱未通过验证，请先验证您的邮箱所有权");
+//        }
+
+        // 添加: 验证邀请码
+        validateInvitationCode(registerRequest.getInvitationCode());
 
         // 创建新用户
         User user = new User();

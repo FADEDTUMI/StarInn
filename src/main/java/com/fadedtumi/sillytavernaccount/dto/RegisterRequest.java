@@ -1,5 +1,6 @@
 package com.fadedtumi.sillytavernaccount.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -26,4 +27,9 @@ public class RegisterRequest {
     @Pattern(regexp = "^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\\d{8}$",
             message = "手机号格式不正确")
     private String phoneNumber;
+
+    // 添加邀请码字段
+    @NotBlank(message = "邀请码不能为空")
+    @JsonAlias("inviteCode") // 添加这行，让系统同时接受inviteCode和invitationCode
+    private String invitationCode;
 }

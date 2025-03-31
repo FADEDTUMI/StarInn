@@ -1,8 +1,8 @@
-# SillytavernAccount
+# StarInn
 
 ## 项目简介
 
-SillytavernAccount 是一个基于 Spring Boot 开发的用户账户管理系统，提供完整的用户注册、身份验证和授权功能。该系统使用 JWT (JSON Web Token) 进行安全验证，支持邀请码注册机制及 OAuth2 第三方登录。
+StarInn 是一个基于 Spring Boot 开发的用户账户管理系统，提供完整的用户注册、身份验证和授权功能。该系统使用 JWT (JSON Web Token) 进行安全验证，支持邀请码注册机制及 OAuth2 第三方登录。
 
 ## 作者赞助通道
 如果您觉得本项目对您有帮助，欢迎通过以下方式支持作者：
@@ -41,8 +41,8 @@ SillytavernAccount 是一个基于 Spring Boot 开发的用户账户管理系统
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/FADEDTUMI/SillytavernAccount.git
-cd SillytavernAccount
+git clone https://github.com/FADEDTUMI/StarInn.git
+cd StarInn
 ```
 
 ### 2. 配置数据库
@@ -77,7 +77,7 @@ admin.registration.key=您的管理员注册密钥
 
 ```bash
 mvn clean package
-java -jar target/SillytavernAccount-0.0.1-SNAPSHOT.jar
+java -jar target/StarInn-0.0.1-SNAPSHOT.jar
 ```
 
 或者直接使用 Maven 运行：
@@ -141,10 +141,38 @@ POST /api/auth/refresh-token
 POST /api/auth/logout
 ```
 
+### 管理员注册
+
+```
+POST /api/auth/register/admin
+```
+
+请求体：
+```json
+{
+  "username": "管理员用户名",
+  "email": "管理员邮箱",
+  "password": "密码",
+  "fullName": "全名",
+  "phoneNumber": "手机号码"
+}
+```
+
+参数：
+```
+adminKey=您的管理员注册密钥
+```
+
+### 管理员权限检查
+
+```
+GET /api/admin/check-permission
+```
+
 ## 项目结构
 
 ```
-src/main/java/com/fadedtumi/sillytavernaccount/
+src/main/java/com/fadedtumi/starinn/
 ├── config/             # 配置类
 ├── controller/         # API 控制器
 ├── dto/                # 数据传输对象
@@ -206,4 +234,3 @@ app.invitation.code=FIRST
 ## 免责声明
 
 本项目仅供学习和研究使用，作者不对任何因使用本项目而导致的直接或间接损失承担责任。请遵守相关法律法规。
-
